@@ -42,20 +42,6 @@ For each press release:
 
 The extraction rules are tested against real dataset excerpts (not invented examples) in [`tests/test_extract.py`](tests/test_extract.py) — 15 tests covering datelines, both person-naming patterns, agency/money/quantity extraction, action classification, and HTML parsing, all passing. [`tests/test_pipeline_smoke.py`](tests/test_pipeline_smoke.py) runs the full extract → validate flow end-to-end on a small hand-picked sample, including a deliberately malformed row, to confirm the pipeline degrades gracefully instead of crashing on bad data. A sample report from that smoke test is in [`notes/validation_report_sample.md`](notes/validation_report_sample.md); it understates real coverage because the sample rows use the dataset's truncated preview text, not full release bodies.
 
-## Getting started
-
-```bash
-git clone https://github.com/aayanahmed20/stanford-daily-biglocal-ice-pipeline.git
-cd stanford-daily-biglocal-ice-pipeline
-pip install -r requirements.txt
-
-# run the test suite (no network access required)
-python -m pytest tests/
-
-# run the full pipeline against the live dataset (requires internet access to huggingface.co)
-python scripts/pipeline.py --out data/extracted.csv --report notes/validation_report.md
-```
-
 ## Project structure
 
 - `scripts/extract.py` — HTML parsing and structured entity extraction rules

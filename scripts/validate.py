@@ -39,7 +39,7 @@ def validate_dataframe(df: pd.DataFrame) -> dict:
 
     # 1. Schema -----------------------------------------------------------
     missing_required = {
-        field: int(df[field].isna().sum() | (df[field] == "").sum())
+        field: int((df[field].isna() | (df[field] == "")).sum())
         for field in REQUIRED_FIELDS
         if field in df.columns
     }
@@ -121,7 +121,7 @@ def usable_mask(df: pd.DataFrame) -> pd.Series:
 
 def format_report(report: dict) -> str:
     """Render the report dict as a short Markdown summary."""
-    lines = [f"# Validation report", "", f"Total records: **{report['total_records']}**", ""]
+    lines = ["# Validation report", "", f"Total records: **{report['total_records']}**", ""]
 
     lines.append("## Schema")
     lines.append(f"- Passes: **{report['schema']['passes']}**")

@@ -98,7 +98,55 @@ def test_extract_people_no_false_positive_on_dateline_stopwords():
     assert any(n == "Tomas Juarez-Santos" for n in names)
 
 
-def test_extract_agencies():
+def test_extract_people_merges_duplicate_across_patterns():
+    # First mention has no origin (matched by _PERSON_RE); a later mention of
+    # the same person in the "a NN-year-old ... of Country" phrasing adds the
+    # origin. The merged record should keep the origin, not drop it because
+    # the name was already "seen" by the first pattern.
+    text = (
+        "Maria Elena Torres-Reyes, 29, was arrested Tuesday during a "
+        "targeted enforcement operation. Officials confirmed Maria Elena "
+        "Torres-Reyes, a 29-year-old national of Honduras, remains in "
+        "custody pending removal proceedings."
+    )
+    people = extract_people(text)
+    matches = [p for p in people if p["name"] == "Maria Elena Torres-Reyes"]
+    assert len(matches) == 1
+    assert matches[0]["origin"] == "Honduras"
+
+
+def test_extract_record_sets_text_field_from_full_text():
+    example = {
+        "url": "https://www.ice.gov/news/releases/example",
+        "title": "Example release",
+        "full_text": FORT_MYERS_TEXT,
+    }
+    record = extract_record(dict(example))
+    assert record["text"] == FORT_MYERS_TEXT
+
+
+def test_extract_record_sets_text_field_from_html_when_no_full_text():
+    # Simulates a future scrape that only has the html column (no full_text
+    # at all). extract_record should still populate `text` from the parsed
+    # HTML, so a downstream word-count filter keyed on `text` -- not
+    # `full_text` -- doesn't drop the row.
+    html = """
+    <html><head><title>Sample Release | ICE</title></head><body>
+    <article>
+        <p>PHOENIX, Ariz. -- Sample lead paragraph with enough words to
+        clear a minimum word-count filter for testing purposes here.</p>
+        <p>Second paragraph with more detail about the operation.</p>
+    </article>
+    </body></html>
+    """
+    example = {"url": "https://www.ice.gov/news/releases/example-2", "html": html}
+    record = extract_record(example)
+    assert "full_text" not in record or not record.get("full_text")
+    assert record["text"]
+    assert len(record["text"].split()) > 0
+
+
+
     agencies = extract_agencies(TAMPA_TEXT)
     assert "HSI" in agencies
 

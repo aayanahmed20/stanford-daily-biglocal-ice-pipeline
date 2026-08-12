@@ -126,33 +126,42 @@ def extract_people(text: str) -> list[dict]:
     Find named individuals in the release body. Two phrasings are matched:
       - "Name, AGE[, of/from Origin]"        e.g. "Shem Wayne Alexander, 35, of Port of Spain, Trinidad"
       - "Name, a AGE-year-old ... of/from X"  e.g. "Johnny Noviello, a 49-year-old citizen of Canada"
+
+    The two patterns can both match the same person (e.g. one release
+    mentions a name once as "NAME, AGE" and again later as "NAME, a
+    AGE-year-old ... of Country"). Matches are merged by name rather than
+    deduplicated by "first match wins," so a later match that fills in an
+    `origin` the earlier one lacked isn't silently thrown away.
     """
     if not text:
         return []
 
-    people = []
-    seen = set()
+    people: dict[str, dict] = {}
+    order: list[str] = []
     for pattern in (_PERSON_RE, _PERSON_AGE_YO_RE):
         for m in pattern.finditer(text):
             name = m.group("name").strip()
             age = int(m.group("age"))
             origin = m.group("origin")
+            origin = origin.strip().rstrip(",.") if origin else None
 
             first_token = name.split()[0]
             if first_token in _NAME_STOPWORDS:
                 continue
             if not (0 < age <= 110):
                 continue
-            if name in seen:
-                continue
-            seen.add(name)
 
-            people.append({
-                "name": name,
-                "age": age,
-                "origin": origin.strip().rstrip(",.") if origin else None,
-            })
-    return people
+            if name not in people:
+                people[name] = {"name": name, "age": age, "origin": origin}
+                order.append(name)
+            else:
+                # Already have this name -- keep the record, but upgrade it
+                # with anything new this match adds instead of skipping.
+                existing = people[name]
+                if not existing.get("origin") and origin:
+                    existing["origin"] = origin
+
+    return [people[name] for name in order]
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +259,13 @@ def extract_record(example: dict) -> dict:
         example["image_count"] = parsed["image_count"]
     else:
         text = example.get("full_text") or ""
+
+    # The field every downstream filter/validator should key off of: it's
+    # whatever text extraction actually derived (HTML-derived when available,
+    # falling back to full_text), not a re-read of the raw source column.
+    # This keeps `run()`'s word-count filter correct even on a future scrape
+    # that has an `html` field but no `full_text` field at all.
+    example["text"] = text
 
     dateline, body = extract_dateline(text)
     people = extract_people(text)

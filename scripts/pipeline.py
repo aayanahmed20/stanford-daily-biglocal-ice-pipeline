@@ -43,9 +43,12 @@ def run(out_path: str, report_path: str, min_word_count: int = 50) -> pd.DataFra
     records = [extract_record(row.to_dict()) for _, row in df.iterrows()]
     out_df = pd.DataFrame(records)
 
-    # Same basic filter as the assignment's starter `validate()`, applied
-    # before the heavier validation/report step below.
-    out_df = out_df[out_df["full_text"].fillna("").str.split().apply(len) >= min_word_count]
+    # Filter on `text` (what extraction actually used: HTML-derived body
+    # when available, full_text otherwise) rather than `full_text` directly.
+    # On a future scrape with only an `html` field and no `full_text` at
+    # all, this keeps rows that extract_record successfully parsed instead
+    # of dropping every one of them for having an empty full_text column.
+    out_df = out_df[out_df["text"].fillna("").str.split().apply(len) >= min_word_count]
 
     report = validate_dataframe(out_df)
 

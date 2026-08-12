@@ -114,3 +114,36 @@ def test_pipeline_smoke_end_to_end():
 
     # At least the 4 well-formed rows should be usable for analysis.
     assert usable_mask(df).sum() >= 4
+
+
+def test_pipeline_word_count_filter_survives_html_only_future_scrape():
+    """
+    Regression test for the run() filter bug: a future scrape row that has
+    an `html` field but no `full_text` field at all must not be dropped by
+    the min-word-count filter just because `full_text` is absent. The
+    filter should run on `text` (what extract_record actually derived),
+    which mirrors the min-word-count line in scripts/pipeline.py::run().
+    """
+    html = """
+    <html><head><title>Future Release | ICE</title></head><body>
+    <article>
+        <p>DENVER, Colo. -- A lengthy press release body with well over
+        fifty words needs to be present here so that the word count filter
+        used by the pipeline's run() function does not drop this row just
+        because it lacks a full_text column entirely, which is the exact
+        scenario a future HTML-only scrape would produce for every single
+        row in the dataset if the filter still read full_text directly.</p>
+    </article>
+    </body></html>
+    """
+    row = {"url": "https://www.ice.gov/news/releases/future-html-only", "html": html}
+    record = extract_record(dict(row))
+    out_df = pd.DataFrame([record])
+
+    # The old, buggy filter (kept here only to document the failure mode).
+    old_filter = out_df.get("full_text", pd.Series([None])).fillna("").str.split().apply(len) >= 50
+    assert not old_filter.iloc[0], "sanity check: full_text is indeed absent/empty"
+
+    # The fixed filter, as used in scripts/pipeline.py::run().
+    new_filter = out_df["text"].fillna("").str.split().apply(len) >= 50
+    assert new_filter.iloc[0]

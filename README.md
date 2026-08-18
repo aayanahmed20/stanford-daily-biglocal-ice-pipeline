@@ -1,7 +1,7 @@
 # Stanford Daily Big Local News ICE Extraction Pipeline
 
-![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/hugging%20face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
+[![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Hugging Face](https://img.shields.io/badge/hugging%20face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
 
 A data extraction and validation pipeline for [`stanforddams/biglocal`](https://huggingface.co/datasets/stanforddams/biglocal), 965 press releases published by U.S. Immigration and Customs Enforcement (ICE), curated by [Big Local News](https://biglocalnews.org/) at Stanford University for the Datathon for Social Good 2026. Built for a data journalism assignment at the Stanford Daily.
 

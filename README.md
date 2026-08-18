@@ -1,4 +1,4 @@
-# Stanford Daily Big Local News ICE Extraction Pipeline
+# Stanford Daily: Big Local News ICE Extraction Pipeline
 
 [![Python](https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Hugging Face](https://img.shields.io/badge/hugging%20face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
